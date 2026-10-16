@@ -23,11 +23,11 @@ L'objectif est de développer une application de quiz portant sur l'hygiène inf
 - JSON
 - Git et GitHub
 
-## Membres du groupe
+## Composition du groupe
 
-BINTI ABD MALIK Ainul Nafisah
-BIN JASNI Muhammad Anas
-BIN AMEER WAHDI Adam
+BINTI ABD MALIK Ainul Nafisah -- *ainulmlk*
+BIN JASNI Muhammad Anas -- *Anazzj221*
+BIN AMEER WAHDI Adam -- *adamameer06*
 
 ## Installation et utilisation
 
