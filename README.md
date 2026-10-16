@@ -23,14 +23,6 @@ L'objectif est de développer une application de quiz portant sur l'hygiène inf
 - JSON
 - Git et GitHub
 
-## Organisation du projet
-
-- `docs/` : documentation et RACI
-- `java/` : application Java 
-- `web/` : interface web
-- `database/` : schéma et scripts SQL
-- `tests/` : tests du projet
-
 ## Membres du groupe
 
 BINTI ABD MALIK Ainul Nafisah
