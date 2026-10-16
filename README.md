@@ -19,7 +19,7 @@ L'objectif est de développer une application de quiz portant sur l'hygiène inf
 
 - Java
 - Base de données locale
-- HTML, CSS et JavaScript
+- HTML, CSS, PHP et JavaScript
 - JSON
 - Git et GitHub
 
