@@ -18,7 +18,7 @@ L'objectif est de développer une application de quiz portant sur l'hygiène inf
 ## Technologies
 
 - Java
-- Base de données locale (à définir)
+- Base de données locale
 - HTML, CSS et JavaScript
 - JSON
 - Git et GitHub
