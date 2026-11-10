@@ -20,6 +20,10 @@ public class Question {
         this.type = type;
     }
 
+    public void setId(int id) {
+    this.id = id;
+    }
+
     public int getId() {
         return id;
     }
