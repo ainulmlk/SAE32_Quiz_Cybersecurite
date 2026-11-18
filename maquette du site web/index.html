@@ -1,10 +1,30 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quiz Cyber</title><link rel="stylesheet" href="style.css"></head>
+<title>Quiz Cyber — Accueil</title><link rel="stylesheet" href="style.css"></head>
 <body>
-<nav><a class="brand" href="index.html">Quiz Cyber</a><div class="links"><a href="index.html">Accueil</a><a href="quiz.html">Quiz</a></div></nav>
+<nav><a class="brand" href="index.html">Quiz Cyber</a><div class="links"><a href="index.html" aria-current="page">Accueil</a><a href="quiz.html">Quiz</a></div></nav>
 <main class="wide">
-<h1>Test Mockup</h1>
-<p class="lead">DESCRIPTION</p>
-<a class="btn" href="quiz.html">START</a>
-</main></body></html>
+<p class="best" id="best" hidden>Meilleur score : <strong id="best-n"></strong></p>
+<h1>Quel est votre niveau en cybersécurité ?</h1>
+<p class="lead">Répondez à 10 questions sur les mots de passe, le phishing et les réseaux. Vous voyez la correction à la fin.</p>
+<div class="actions">
+  <a class="btn" href="quiz.html">Commencer le quiz</a>
+  <p class="hint">Astuce : les touches 1 à 4 sélectionnent une réponse.</p>
+</div>
+<dl class="facts">
+  <div><dt id="f-count">10 questions</dt><dd>Une seule bonne réponse par question.</dd></div>
+  <div><dt>Environ 3 minutes</dt><dd>Sans chrono, à votre rythme.</dd></div>
+  <div><dt>Correction détaillée</dt><dd>Chaque réponse est expliquée à la fin.</dd></div>
+</dl>
+</main>
+<footer>Quiz Cyber · SAÉ 3.02 · maquette</footer>
+<script src="data.js"></script>
+<script>
+document.getElementById('f-count').textContent = QUESTIONS.length + ' questions';
+const best = QuizStore.getBest();
+if (best !== null) {
+  document.getElementById('best-n').textContent = best + ' / ' + QUESTIONS.length;
+  document.getElementById('best').hidden = false;
+}
+</script>
+</body></html>

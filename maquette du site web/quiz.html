@@ -2,16 +2,89 @@
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Quiz Cyber — Question</title><link rel="stylesheet" href="style.css"></head>
 <body>
-<nav><a class="brand" href="index.html">Quiz Cyber</a><div class="links"><a href="index.html">Accueil</a><a href="quiz.html">Quiz</a></div></nav>
+<nav><a class="brand" href="index.html">Quiz Cyber</a><div class="links"><a href="index.html">Accueil</a><a href="quiz.html" aria-current="page">Quiz</a></div></nav>
 <main>
-<p class="label">Question</p>
-<div class="progress"><div style="width:30%"></div></div>
-<h2>Question</h2>
-<form action="quiz.html" method="post">
-<label class="opt"><input type="radio" name="reponse" value="1"> response 1</label>
-<label class="opt"><input type="radio" name="reponse" value="2"> response 2</label>
-<label class="opt"><input type="radio" name="reponse" value="3"> response 3</label>
-<label class="opt"><input type="radio" name="reponse" value="4"> response 4</label>
-<button class="btn" type="submit">Valider</button>
+<div class="qhead"><p class="label" id="counter">Question 1 sur 10</p><a class="quit" href="index.html">Quitter</a></div>
+<div class="progress" role="progressbar" aria-label="Progression" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0"><div id="bar"></div></div>
+<h2 id="qtext" tabindex="-1"></h2>
+<form id="form" autocomplete="off">
+  <fieldset id="options" aria-labelledby="qtext"></fieldset>
+  <div id="feedback" class="feedback" role="status" hidden></div>
+  <div class="actions">
+    <button class="btn" id="action" type="submit" disabled>Valider</button>
+    <p class="hint">Touches 1–4 pour répondre, Entrée pour valider.</p>
+  </div>
 </form>
-</main></body></html>
+</main>
+<script src="data.js"></script>
+<script>
+const total = QUESTIONS.length;
+const $ = id => document.getElementById(id);
+const form = $('form'), opts = $('options'), fb = $('feedback'), btn = $('action');
+let i = 0, answered = false;
+const answers = [];
+
+function setBar(n){
+  $('bar').style.width = (n / total * 100) + '%';
+  $('bar').parentElement.setAttribute('aria-valuenow', n);
+}
+
+function render(){
+  const item = QUESTIONS[i];
+  answered = false;
+  $('counter').textContent = `Question ${i + 1} sur ${total}`;
+  $('qtext').textContent = item.q;
+  opts.innerHTML = item.choices.map((c, k) =>
+    `<label class="opt"><input type="radio" name="reponse" value="${k}"><span class="key">${k + 1}</span><span class="txt">${c}</span></label>`
+  ).join('');
+  fb.hidden = true;
+  btn.textContent = 'Valider';
+  btn.disabled = true;
+  setBar(i);
+  $('qtext').focus({preventScroll:true});
+}
+
+function check(sel){
+  const item = QUESTIONS[i];
+  answers[i] = sel;
+  answered = true;
+  [...opts.children].forEach((label, k) => {
+    label.classList.add('locked');
+    label.querySelector('input').disabled = true;
+    if (k === item.correct) { label.classList.add('good'); label.insertAdjacentHTML('beforeend', '<span class="tag">Bonne réponse</span>'); }
+    else if (k === sel) { label.classList.add('bad'); label.insertAdjacentHTML('beforeend', '<span class="tag">Votre réponse</span>'); }
+  });
+  const ok = sel === item.correct;
+  fb.className = 'feedback ' + (ok ? 'ok' : 'ko');
+  fb.innerHTML = `<strong>${ok ? 'Bonne réponse.' : 'Raté.'}</strong><p>${ok ? '' : 'La bonne réponse était : ' + item.choices[item.correct] + '. '}${item.why}</p>`;
+  fb.hidden = false;
+  btn.textContent = i === total - 1 ? 'Voir le résultat' : 'Question suivante';
+  btn.disabled = false;
+  setBar(i + 1);
+  btn.focus();
+}
+
+function next(){
+  if (i === total - 1) { QuizStore.saveAnswers(answers); location.href = 'resultat.html'; }
+  else { i++; render(); }
+}
+
+opts.addEventListener('change', () => { btn.disabled = false; });
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  if (answered) return next();
+  const sel = form.reponse.value;
+  if (sel !== '') check(+sel);
+});
+
+/* Raccourcis clavier 1–4 */
+document.addEventListener('keydown', e => {
+  if (answered || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = parseInt(e.key, 10) - 1;
+  const radios = opts.querySelectorAll('input');
+  if (k >= 0 && k < radios.length) { radios[k].checked = true; radios[k].focus(); btn.disabled = false; }
+});
+
+render();
+</script>
+</body></html>

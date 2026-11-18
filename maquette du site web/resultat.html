@@ -5,7 +5,134 @@
 <nav><a class="brand" href="index.html">Quiz Cyber</a><div class="links"><a href="index.html">Accueil</a><a href="quiz.html">Quiz</a></div></nav>
 <main class="wide">
 <p class="label">Résultat</p>
-<div class="score">8 <span>/ 10</span></div>
-<p class="lead">Bon résultat.</p>
-<a class="btn" href="quiz.html">Recommencer</a>
-</main></body></html>
+<div class="score" aria-live="polite"><span id="score-n">0</span><span class="total">/ <span id="score-t">10</span></span></div>
+<p class="lead" id="verdict"></p>
+<div class="actions">
+  <a class="btn" href="quiz.html">Recommencer</a>
+  <button class="btn ghost" id="copy" type="button">Copier mon score</button>
+</div>
+<p class="notice" id="demo" hidden>Données de démonstration. <a href="quiz.html">Passez le quiz</a> pour voir vos vrais résultats.</p>
+
+<section class="review" aria-label="Correction détaillée">
+  <h2>Correction</h2>
+  <div class="pips" id="pips"></div>
+  <div class="toolbar">
+    <div class="filters" role="group" aria-label="Filtrer les questions">
+      <button class="chip" data-filter="all" aria-pressed="true">Toutes</button>
+      <button class="chip" data-filter="ko" aria-pressed="false">Erreurs</button>
+    </div>
+    <button class="link-btn" id="toggle-all" type="button">Tout révéler</button>
+  </div>
+  <div id="list"></div>
+</section>
+</main>
+<footer>Quiz Cyber · SAÉ 3.02 · maquette</footer>
+
+<script src="data.js"></script>
+<script>
+const total = QUESTIONS.length;
+const L = ['A','B','C','D'];
+let answers = QuizStore.loadAnswers();
+const isDemo = !answers;
+if (isDemo) answers = [0,1,2,2,1,0,1,1,0,2];   // démo : 7 / 10
+document.getElementById('demo').hidden = !isDemo;
+
+const score = QUESTIONS.filter((q, i) => answers[i] === q.correct).length;
+if (!isDemo) QuizStore.saveScore(score);
+
+/* Score + verdict */
+document.getElementById('score-t').textContent = total;
+const n = document.getElementById('score-n');
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) n.textContent = score;
+else {
+  const t0 = performance.now(), dur = 700;
+  (function tick(t){
+    const p = Math.min((t - t0) / dur, 1);
+    n.textContent = Math.round(score * p);
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+const r = score / total;
+document.getElementById('verdict').textContent =
+  r === 1 ? "Sans faute !" : r >= .8 ? "Très bon résultat." : r >= .5 ? "Bon début. Regardez vos erreurs ci-dessous." : "À retravailler : ouvrez les questions pour voir les corrections.";
+
+/* Liste des questions */
+const list = document.getElementById('list');
+const pips = document.getElementById('pips');
+QUESTIONS.forEach((item, i) => {
+  const user = answers[i], ok = user === item.correct;
+  const el = document.createElement('article');
+  el.className = 'q ' + (ok ? 'ok' : 'ko');
+  el.id = 'q' + i;
+  el.dataset.status = ok ? 'ok' : 'ko';
+  el.innerHTML = `
+    <button class="q-head" type="button" aria-expanded="false" aria-controls="b${i}">
+      <span class="mark" aria-hidden="true">${ok ? '✓' : '✕'}</span>
+      <span class="q-title"><span class="sr-only">${ok ? 'Réussie : ' : 'Ratée : '}</span>${i + 1}. ${item.q}</span>
+      <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>
+    </button>
+    <div class="q-body" id="b${i}"><div>
+      <ul class="answers">
+        ${item.choices.map((c, k) => {
+          const good = k === item.correct, mine = k === user;
+          const cls = good ? 'good' : mine ? 'bad' : '';
+          const tag = good && mine ? 'Votre réponse · correcte' : good ? 'Bonne réponse' : mine ? 'Votre réponse' : '';
+          return `<li class="${cls}"><span>${L[k]}. ${c}</span><span class="tag">${tag}</span></li>`;
+        }).join('')}
+      </ul>
+      <p class="explain">${item.why}</p>
+    </div></div>`;
+  list.appendChild(el);
+
+  const pip = document.createElement('button');
+  pip.type = 'button';
+  pip.className = 'pip ' + (ok ? 'ok' : 'ko');
+  pip.setAttribute('aria-label', `Question ${i + 1} : ${ok ? 'réussie' : 'ratée'}`);
+  pip.title = `Question ${i + 1}`;
+  pip.addEventListener('click', () => {
+    document.querySelector('.chip[data-filter="all"]').click();
+    setOpen(el, true); syncToggle();
+    el.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center'});
+  });
+  pips.appendChild(pip);
+});
+
+function setOpen(el, open){
+  el.classList.toggle('open', open);
+  el.querySelector('.q-head').setAttribute('aria-expanded', open);
+}
+list.addEventListener('click', e => {
+  const head = e.target.closest('.q-head');
+  if (head) { const q = head.parentElement; setOpen(q, !q.classList.contains('open')); syncToggle(); }
+});
+
+/* Tout révéler / masquer */
+const toggleAll = document.getElementById('toggle-all');
+const visibleQs = () => [...list.children].filter(q => !q.hidden);
+function syncToggle(){
+  const v = visibleQs();
+  toggleAll.textContent = v.length && v.every(q => q.classList.contains('open')) ? 'Tout masquer' : 'Tout révéler';
+}
+toggleAll.addEventListener('click', () => {
+  const open = toggleAll.textContent === 'Tout révéler';
+  visibleQs().forEach(q => setOpen(q, open));
+  syncToggle();
+});
+
+/* Filtre : toutes / erreurs */
+document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => {
+  document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c === chip));
+  const f = chip.dataset.filter;
+  [...list.children].forEach(q => q.hidden = f === 'ko' && q.dataset.status !== 'ko');
+  syncToggle();
+}));
+
+/* Copier le score */
+const copyBtn = document.getElementById('copy');
+copyBtn.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(`J'ai obtenu ${score}/${total} au Quiz Cyber !`); copyBtn.textContent = 'Copié ✓'; }
+  catch(e) { copyBtn.textContent = 'Copie impossible'; }
+  setTimeout(() => copyBtn.textContent = 'Copier mon score', 1800);
+});
+</script>
+</body></html>
