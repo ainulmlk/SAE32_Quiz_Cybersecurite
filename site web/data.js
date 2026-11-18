@@ -1,7 +1,26 @@
-/* ===== Données du quiz (partagées par index, quiz et résultat) =====
-   q = énoncé · choices = réponses · correct = index de la bonne réponse · why = explication
-   Plus tard : remplacez ce tableau par les données de la base (PHP -> JSON). */
-const QUESTIONS = [
+/* ===== Quiz Cyber : accès au serveur (PHP + base de données) ===== */
+const QUIZ_LENGTH = 10;
+
+/* Échappe le texte venant de la base avant de l'insérer dans du HTML
+   (les questions importées d'autres sites ne sont pas de confiance). */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function apiQuestions(){
+  const r = await fetch('api/questions.php');
+  if (!r.ok) throw new Error('questions');
+  return (await r.json()).questions;
+}
+async function apiVerify(questionId, reponseId){
+  const r = await fetch('api/verifier.php', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({question_id: questionId, reponse_id: reponseId})
+  });
+  if (!r.ok) throw new Error('verifier');
+  return r.json();   // {ok, correct:[ids], why}
+}
+
+/* Données d'exemple pour la page résultat quand aucun quiz n'a été fait */
+const DEMO_QUESTIONS = [
   {q:"Que signifie le sigle HTTPS ?", choices:["HyperText Transfer Protocol Secure","High Transfer Text Protocol System","HyperText Transmission Private Service","Host Transfer Protocol Secure"], correct:0, why:"Le « S » indique que les échanges sont chiffrés avec TLS."},
   {q:"Quel type d'attaque consiste à tromper l'utilisateur avec un faux e-mail ?", choices:["DDoS","Phishing","Brute force","Sniffing"], correct:1, why:"Le phishing (hameçonnage) imite un expéditeur de confiance."},
   {q:"Quel port utilise SSH par défaut ?", choices:["21","23","22","80"], correct:2, why:"SSH utilise le port TCP 22."},
@@ -14,14 +33,12 @@ const QUESTIONS = [
   {q:"Que fait un ransomware ?", choices:["Vole des mots de passe","Chiffre les données contre rançon","Ralentit le Wi-Fi","Installe des publicités"], correct:1, why:"Il rend les fichiers inaccessibles jusqu'au paiement d'une rançon."}
 ];
 
-/* ===== Stockage navigateur (maquette sans serveur) ===== */
+/* ===== Stockage navigateur (correction + meilleur score) ===== */
 const QuizStore = {
-  saveAnswers(a){ try{ sessionStorage.setItem('qc-answers', JSON.stringify(a)); }catch(e){} },
-  loadAnswers(){
-    try{
-      const a = JSON.parse(sessionStorage.getItem('qc-answers'));
-      return Array.isArray(a) && a.length === QUESTIONS.length ? a : null;
-    }catch(e){ return null; }
+  saveReview(r){ try{ sessionStorage.setItem('qc-review', JSON.stringify(r)); }catch(e){} },
+  loadReview(){
+    try{ const r = JSON.parse(sessionStorage.getItem('qc-review')); return Array.isArray(r) && r.length ? r : null; }
+    catch(e){ return null; }
   },
   getBest(){ try{ const v = localStorage.getItem('qc-best'); return v === null ? null : +v; }catch(e){ return null; } },
   saveScore(s){ try{ const b = this.getBest(); if (b === null || s > b) localStorage.setItem('qc-best', s); }catch(e){} }

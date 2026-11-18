@@ -25,7 +25,7 @@
 <script>
 const best = QuizStore.getBest();
 if (best !== null) {
-  document.getElementById('best-n').textContent = best + '/' + QUESTIONS.length;
+  document.getElementById('best-n').textContent = best + '/' + QUIZ_LENGTH;
   document.getElementById('best').hidden = false;
 }
 </script>

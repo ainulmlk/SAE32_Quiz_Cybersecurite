@@ -33,12 +33,13 @@
 
 <script src="data.js"></script>
 <script>
-const total = QUESTIONS.length;
 const L = ['A','B','C','D'];
 const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let answers = QuizStore.loadAnswers();
-const isDemo = !answers;
-if (isDemo) answers = [0,1,2,2,1,0,1,1,0,2];   // exemple : 7 / 10
+const review = QuizStore.loadReview();
+const isDemo = !review;
+const QUESTIONS = isDemo ? DEMO_QUESTIONS : review.map(r => ({q:r.q, choices:r.choices, correct:r.correct, why:r.why}));
+const answers = isDemo ? [0,1,2,2,1,0,1,1,0,2] : review.map(r => r.user);   // démo : 7 / 10
+const total = QUESTIONS.length;
 document.getElementById('demo').hidden = !isDemo;
 
 const score = QUESTIONS.filter((q, i) => answers[i] === q.correct).length;
@@ -72,7 +73,7 @@ QUESTIONS.forEach((item, i) => {
   el.innerHTML = `
     <button class="q-head" type="button" aria-expanded="false" aria-controls="b${i}">
       <span class="mark" aria-hidden="true">${ok ? '✓' : '✕'}</span>
-      <span class="q-title"><span class="sr-only">${ok ? 'Réussie : ' : 'Ratée : '}</span>${i + 1}. ${item.q}</span>
+      <span class="q-title"><span class="sr-only">${ok ? 'Réussie : ' : 'Ratée : '}</span>${i + 1}. ${esc(item.q)}</span>
       <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>
     </button>
     <div class="q-body" id="b${i}"><div>
@@ -81,10 +82,10 @@ QUESTIONS.forEach((item, i) => {
           const good = k === item.correct, mine = k === user;
           const cls = good ? 'good' : mine ? 'bad' : '';
           const tag = good && mine ? 'ta réponse, juste' : good ? 'la bonne' : mine ? 'ton choix' : '';
-          return `<li class="${cls}"><span>${L[k]}. ${c}</span><span class="tag">${tag}</span></li>`;
+          return `<li class="${cls}"><span>${L[k]}. ${esc(c)}</span><span class="tag">${tag}</span></li>`;
         }).join('')}
       </ul>
-      <p class="explain">${item.why}</p>
+      <p class="explain">${esc(item.why)}</p>
     </div></div>`;
   list.appendChild(el);
 

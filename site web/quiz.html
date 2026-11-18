@@ -18,11 +18,11 @@
 </main>
 <script src="data.js"></script>
 <script>
-const total = QUESTIONS.length;
+let QUESTIONS = [], total = QUIZ_LENGTH;
 const $ = id => document.getElementById(id);
 const form = $('form'), opts = $('options'), fb = $('feedback'), btn = $('action');
 let i = 0, answered = false;
-const answers = [];
+const review = [];
 
 function setBar(n){
   $('bar').style.width = (n / total * 100) + '%';
@@ -32,10 +32,10 @@ function setBar(n){
 function render(){
   const item = QUESTIONS[i];
   answered = false;
-  $('counter').textContent = `Question ${i + 1} sur ${total}`;
+  $('counter').textContent = `Question ${i + 1} sur ${total}` + (item.theme ? ` · ${item.theme}` : '');
   $('qtext').textContent = item.q;
   opts.innerHTML = item.choices.map((c, k) =>
-    `<label class="opt"><input type="radio" name="reponse" value="${k}"><span class="key">${k + 1}</span><span class="txt">${c}</span></label>`
+    `<label class="opt"><input type="radio" name="reponse" value="${k}"><span class="key">${k + 1}</span><span class="txt">${esc(c.text)}</span></label>`
   ).join('');
   fb.hidden = true;
   btn.textContent = 'Valider';
@@ -44,19 +44,31 @@ function render(){
   $('qtext').focus({preventScroll:true});
 }
 
-function check(sel){
+function showError(msg){
+  fb.className = 'feedback ko';
+  fb.innerHTML = `<p>${msg}</p>`;
+  fb.hidden = false;
+}
+
+async function check(sel){
   const item = QUESTIONS[i];
-  answers[i] = sel;
+  btn.disabled = true;
+  let res;
+  try { res = await apiVerify(item.id, item.choices[sel].id); }
+  catch(e) { showError('Vérification impossible. Réessaie dans un instant.'); btn.disabled = false; return; }
+
+  const ok = res.ok;
+  const goodIdx = ok ? sel : item.choices.findIndex(c => res.correct.includes(c.id));
+  review[i] = {q: item.q, choices: item.choices.map(c => c.text), correct: goodIdx, user: sel, why: res.why || ''};
   answered = true;
   [...opts.children].forEach((label, k) => {
     label.classList.add('locked');
     label.querySelector('input').disabled = true;
-    if (k === item.correct) { label.classList.add('good'); label.insertAdjacentHTML('beforeend', '<span class="tag">la bonne</span>'); }
+    if (res.correct.includes(item.choices[k].id)) { label.classList.add('good'); label.insertAdjacentHTML('beforeend', '<span class="tag">la bonne</span>'); }
     else if (k === sel) { label.classList.add('bad'); label.insertAdjacentHTML('beforeend', '<span class="tag">ton choix</span>'); }
   });
-  const ok = sel === item.correct;
   fb.className = 'feedback ' + (ok ? 'ok' : 'ko');
-  fb.innerHTML = `<strong>${ok ? 'Bien joué !' : 'Pas tout à fait.'}</strong><p>${ok ? '' : 'La bonne réponse : ' + item.choices[item.correct] + '. '}${item.why}</p>`;
+  fb.innerHTML = `<strong>${ok ? 'Bien joué !' : 'Pas tout à fait.'}</strong><p>${ok ? '' : 'La bonne réponse : ' + esc(item.choices[goodIdx].text) + '. '}${esc(res.why || '')}</p>`;
   fb.hidden = false;
   btn.textContent = i === total - 1 ? 'Voir ma note' : 'Question suivante';
   btn.disabled = false;
@@ -65,7 +77,7 @@ function check(sel){
 }
 
 function next(){
-  if (i === total - 1) { QuizStore.saveAnswers(answers); location.href = 'resultat.html'; }
+  if (i === total - 1) { QuizStore.saveReview(review); location.href = 'resultat.html'; }
   else { i++; render(); }
 }
 
@@ -85,6 +97,17 @@ document.addEventListener('keydown', e => {
   if (k >= 0 && k < radios.length) { radios[k].checked = true; radios[k].focus(); btn.disabled = false; }
 });
 
-render();
+/* Chargement des questions depuis la base */
+(async () => {
+  try {
+    QUESTIONS = await apiQuestions();
+    if (!QUESTIONS.length) throw new Error('vide');
+    total = QUESTIONS.length;
+    render();
+  } catch(e) {
+    $('qtext').textContent = 'Impossible de charger les questions.';
+    showError('Vérifie que le serveur web et la base de données sont démarrés.');
+  }
+})();
 </script>
 </body></html>
