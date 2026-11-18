@@ -1,49 +1,53 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quiz Cyber — Résultat</title><link rel="stylesheet" href="style.css"></head>
+<title>Quiz Cyber : Résultat</title><link rel="stylesheet" href="style.css"></head>
 <body>
 <nav><a class="brand" href="index.html">Quiz Cyber</a><div class="links"><a href="index.html">Accueil</a><a href="quiz.html">Quiz</a></div></nav>
 <main class="wide">
-<p class="label">Résultat</p>
-<div class="score" aria-live="polite"><span id="score-n">0</span><span class="total">/ <span id="score-t">10</span></span></div>
-<p class="lead" id="verdict"></p>
+<p class="label">Ta note</p>
+<div class="grade" aria-live="polite">
+  <svg viewBox="0 0 300 160" preserveAspectRatio="none" aria-hidden="true"><path d="M150 10C60 8 8 45 14 82C20 125 90 152 160 148C238 144 292 108 286 68C280 28 210 6 128 16"/></svg>
+  <span id="score-n">0</span><span class="total">/<span id="score-t">10</span></span>
+</div>
+<p class="remark" id="verdict"></p>
 <div class="actions">
   <a class="btn" href="quiz.html">Recommencer</a>
   <button class="btn ghost" id="copy" type="button">Copier mon score</button>
 </div>
-<p class="notice" id="demo" hidden>Données de démonstration. <a href="quiz.html">Passez le quiz</a> pour voir vos vrais résultats.</p>
+<p class="notice" id="demo" hidden>Ce sont des données d'exemple. <a href="quiz.html">Fais le quiz</a> pour voir tes vrais résultats.</p>
 
 <section class="review" aria-label="Correction détaillée">
-  <h2>Correction</h2>
-  <div class="pips" id="pips"></div>
+  <h2>La correction</h2>
+  <div class="grid" id="grid"></div>
   <div class="toolbar">
     <div class="filters" role="group" aria-label="Filtrer les questions">
       <button class="chip" data-filter="all" aria-pressed="true">Toutes</button>
-      <button class="chip" data-filter="ko" aria-pressed="false">Erreurs</button>
+      <button class="chip" data-filter="ko" aria-pressed="false">Mes erreurs</button>
     </div>
     <button class="link-btn" id="toggle-all" type="button">Tout révéler</button>
   </div>
   <div id="list"></div>
 </section>
 </main>
-<footer>Quiz Cyber · SAÉ 3.02 · maquette</footer>
+<footer>Quiz Cyber, projet SAÉ 3.02 (maquette)</footer>
 
 <script src="data.js"></script>
 <script>
 const total = QUESTIONS.length;
 const L = ['A','B','C','D'];
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let answers = QuizStore.loadAnswers();
 const isDemo = !answers;
-if (isDemo) answers = [0,1,2,2,1,0,1,1,0,2];   // démo : 7 / 10
+if (isDemo) answers = [0,1,2,2,1,0,1,1,0,2];   // exemple : 7 / 10
 document.getElementById('demo').hidden = !isDemo;
 
 const score = QUESTIONS.filter((q, i) => answers[i] === q.correct).length;
 if (!isDemo) QuizStore.saveScore(score);
 
-/* Score + verdict */
+/* Note + remarque de la prof */
 document.getElementById('score-t').textContent = total;
 const n = document.getElementById('score-n');
-if (matchMedia('(prefers-reduced-motion: reduce)').matches) n.textContent = score;
+if (calm) n.textContent = score;
 else {
   const t0 = performance.now(), dur = 700;
   (function tick(t){
@@ -54,11 +58,11 @@ else {
 }
 const r = score / total;
 document.getElementById('verdict').textContent =
-  r === 1 ? "Sans faute !" : r >= .8 ? "Très bon résultat." : r >= .5 ? "Bon début. Regardez vos erreurs ci-dessous." : "À retravailler : ouvrez les questions pour voir les corrections.";
+  r === 1 ? "Sans faute, bravo !" : r >= .8 ? "Très bien, il ne manque presque rien." : r >= .5 ? "Pas mal ! Relis tes erreurs plus bas." : "Courage, regarde la correction et retente.";
 
 /* Liste des questions */
 const list = document.getElementById('list');
-const pips = document.getElementById('pips');
+const grid = document.getElementById('grid');
 QUESTIONS.forEach((item, i) => {
   const user = answers[i], ok = user === item.correct;
   const el = document.createElement('article');
@@ -76,7 +80,7 @@ QUESTIONS.forEach((item, i) => {
         ${item.choices.map((c, k) => {
           const good = k === item.correct, mine = k === user;
           const cls = good ? 'good' : mine ? 'bad' : '';
-          const tag = good && mine ? 'Votre réponse · correcte' : good ? 'Bonne réponse' : mine ? 'Votre réponse' : '';
+          const tag = good && mine ? 'ta réponse, juste' : good ? 'la bonne' : mine ? 'ton choix' : '';
           return `<li class="${cls}"><span>${L[k]}. ${c}</span><span class="tag">${tag}</span></li>`;
         }).join('')}
       </ul>
@@ -84,17 +88,17 @@ QUESTIONS.forEach((item, i) => {
     </div></div>`;
   list.appendChild(el);
 
-  const pip = document.createElement('button');
-  pip.type = 'button';
-  pip.className = 'pip ' + (ok ? 'ok' : 'ko');
-  pip.setAttribute('aria-label', `Question ${i + 1} : ${ok ? 'réussie' : 'ratée'}`);
-  pip.title = `Question ${i + 1}`;
-  pip.addEventListener('click', () => {
+  const cell = document.createElement('button');
+  cell.type = 'button';
+  cell.className = 'cell ' + (ok ? 'ok' : 'ko');
+  cell.textContent = i + 1;
+  cell.setAttribute('aria-label', `Question ${i + 1} : ${ok ? 'réussie' : 'ratée'}`);
+  cell.addEventListener('click', () => {
     document.querySelector('.chip[data-filter="all"]').click();
     setOpen(el, true); syncToggle();
-    el.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center'});
+    el.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block: 'center'});
   });
-  pips.appendChild(pip);
+  grid.appendChild(cell);
 });
 
 function setOpen(el, open){
@@ -119,7 +123,7 @@ toggleAll.addEventListener('click', () => {
   syncToggle();
 });
 
-/* Filtre : toutes / erreurs */
+/* Filtre : toutes / mes erreurs */
 document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => {
   document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c === chip));
   const f = chip.dataset.filter;
@@ -130,7 +134,7 @@ document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click'
 /* Copier le score */
 const copyBtn = document.getElementById('copy');
 copyBtn.addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(`J'ai obtenu ${score}/${total} au Quiz Cyber !`); copyBtn.textContent = 'Copié ✓'; }
+  try { await navigator.clipboard.writeText(`J'ai eu ${score}/${total} au Quiz Cyber !`); copyBtn.textContent = 'Copié !'; }
   catch(e) { copyBtn.textContent = 'Copie impossible'; }
   setTimeout(() => copyBtn.textContent = 'Copier mon score', 1800);
 });

@@ -1,29 +1,31 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quiz Cyber — Accueil</title><link rel="stylesheet" href="style.css"></head>
+<title>Quiz Cyber : Accueil</title><link rel="stylesheet" href="style.css"></head>
 <body>
 <nav><a class="brand" href="index.html">Quiz Cyber</a><div class="links"><a href="index.html" aria-current="page">Accueil</a><a href="quiz.html">Quiz</a></div></nav>
 <main class="wide">
-<p class="best" id="best" hidden>Meilleur score : <strong id="best-n"></strong></p>
-<h1>Quel est votre niveau en cybersécurité ?</h1>
-<p class="lead">Répondez à 10 questions sur les mots de passe, le phishing et les réseaux. Vous voyez la correction à la fin.</p>
+<p class="note best" id="best" hidden>Ton meilleur score : <span id="best-n"></span></p>
+<h1>Tu te crois à l'abri des pirates ?</h1>
+<p class="lead">Dix questions pour tester tes réflexes en cybersécurité. Compte trois minutes, et tu verras la correction question par question à la fin.</p>
 <div class="actions">
-  <a class="btn" href="quiz.html">Commencer le quiz</a>
-  <p class="hint">Astuce : les touches 1 à 4 sélectionnent une réponse.</p>
+  <a class="btn" href="quiz.html">Je me lance</a>
+  <span class="note" aria-hidden="true">
+    <svg width="46" height="26" viewBox="0 0 46 26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M44 20C30 24 14 20 6 8"/><path d="M5 17L5 6l11 2"/></svg>
+    pas de chrono, promis
+  </span>
 </div>
-<dl class="facts">
-  <div><dt id="f-count">10 questions</dt><dd>Une seule bonne réponse par question.</dd></div>
-  <div><dt>Environ 3 minutes</dt><dd>Sans chrono, à votre rythme.</dd></div>
-  <div><dt>Correction détaillée</dt><dd>Chaque réponse est expliquée à la fin.</dd></div>
-</dl>
+<ol class="steps">
+  <li>Tu choisis une réponse parmi quatre.</li>
+  <li>Tu valides et tu lis l'explication tout de suite.</li>
+  <li>À la fin, tu découvres ta note et tu peux revoir tes erreurs.</li>
+</ol>
 </main>
-<footer>Quiz Cyber · SAÉ 3.02 · maquette</footer>
+<footer>Quiz Cyber, projet SAÉ 3.02 (maquette)</footer>
 <script src="data.js"></script>
 <script>
-document.getElementById('f-count').textContent = QUESTIONS.length + ' questions';
 const best = QuizStore.getBest();
 if (best !== null) {
-  document.getElementById('best-n').textContent = best + ' / ' + QUESTIONS.length;
+  document.getElementById('best-n').textContent = best + '/' + QUESTIONS.length;
   document.getElementById('best').hidden = false;
 }
 </script>
